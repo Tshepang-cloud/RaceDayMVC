@@ -1,0 +1,25 @@
+﻿@{
+    ViewData["Title"] = "Organiser Dashboard";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="text-primary fw-bold">Organiser Dashboard</h1>
+    <a asp-controller="Events" asp-action="Create" class="btn btn-warning fw-bold">+ Create New Event</a>
+</div>
+
+<div class="alert alert-info">
+    Welcome back, <strong>@Context.Session.GetString("UserName")</strong>! Manage your events below.
+</div>
+
+<!-- Placeholder for Event List (You will need to fetch this via API later) -->
+<div class="row">
+    <div class="col-md-4">
+        <div class="card shadow-sm border-0 mb-3">
+            <div class="card-body">
+                <h5 class="card-title">City Marathon 2024</h5>
+                <p class="card-text text-muted">Date: 15 Dec 2024</p>
+                <span class="badge bg-success">Active</span>
+            </div>
+        </div>
+    </div>
+</div>
