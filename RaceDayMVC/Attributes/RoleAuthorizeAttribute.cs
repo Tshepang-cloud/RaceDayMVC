@@ -21,7 +21,7 @@ public class RoleAuthorizeAttribute : ActionFilterAttribute
         }
         else if (userRole != _role)
         {
-            context.Result = new RedirectToActionResult("Index", "Home", null); // Unauthorized fallback
+            context.Result = new RedirectToActionResult("Index", "Home", null);
         }
 
         base.OnActionExecuting(context);

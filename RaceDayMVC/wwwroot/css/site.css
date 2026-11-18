@@ -12,10 +12,9 @@ html {
 
 body {
     margin-bottom: 60px;
-    background-color: #f4f7f6; /* Sporty light grey/green tint */
+    background-color: #f4f7f6;
 }
 
-/* Energetic Theme Colors */
 .bg-dark {
     background-color: #1a1e23 !important;
 }
@@ -23,7 +22,7 @@ body {
 .text-warning {
     color: #ffb703 !important;
 }
-/* Vibrant Amber/Orange */
+
 .btn-primary {
     background-color: #219ebc;
     border-color: #219ebc;

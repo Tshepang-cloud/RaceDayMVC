@@ -16,22 +16,25 @@ namespace RacedayMvc.Controllers
             _apiService = apiService;
         }
 
+        [HttpGet]
+        [RoleAuthorize("Organiser")]
+        public IActionResult Create() => View();
+
         [HttpPost]
         [RoleAuthorize("Organiser")]
         public async Task<IActionResult> Create(EventViewModel model, IFormFile bannerImage)
         {
             if (ModelState.IsValid)
             {
-                // 1. Create the event
-                var eventData = new { Name = model.Name, Date = model.Date, Location = model.Location };
+                var userId = HttpContext.Session.GetInt32("UserId");
+                var eventData = new { EventName = model.Name, Date = model.Date, Location = model.Location, OrganiserId = userId };
                 var createResponse = await _apiService.PostAsync("api/events", JsonContent.Create(eventData));
 
                 if (createResponse.IsSuccessStatusCode)
                 {
                     var createdEvent = await createResponse.Content.ReadFromJsonAsync<EventResponse>();
 
-                    // 2. Handle Image Upload via API
-                    if (bannerImage != null && bannerImage.Length > 0)
+                    if (bannerImage != null && bannerImage.Length > 0 && createdEvent != null)
                     {
                         using var content = new MultipartFormDataContent();
                         using var stream = bannerImage.OpenReadStream();
@@ -39,23 +42,13 @@ namespace RacedayMvc.Controllers
                         fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(bannerImage.ContentType);
                         content.Add(fileContent, "file", bannerImage.FileName);
 
-                        var uploadResponse = await _apiService.PostAsync($"api/events/{createdEvent.Id}/upload-banner", content);
-
-                        if (!uploadResponse.IsSuccessStatusCode)
-                        {
-                            ViewBag.Error = "Event created, but image upload failed.";
-                            return View(model);
-                        }
+                        await _apiService.PostAsync($"api/events/{createdEvent.Id}/upload-banner", content);
                     }
                     return RedirectToAction("Dashboard", "Organiser");
                 }
+                ViewBag.Error = await createResponse.Content.ReadAsStringAsync();
             }
             return View(model);
         }
-    }
-
-    public class EventResponse
-    {
-        public int Id { get; set; }
     }
 }

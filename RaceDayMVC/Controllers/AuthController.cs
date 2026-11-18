@@ -2,7 +2,8 @@
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
-using RacedayMvc.Services; // <--- THIS LINE FIXES THE RED SQUIGGLY LINES
+using RacedayMvc.Models;
+using RacedayMvc.Services;
 
 namespace RacedayMvc.Controllers
 {
@@ -16,10 +17,7 @@ namespace RacedayMvc.Controllers
         }
 
         [HttpGet]
-        public IActionResult Login()
-        {
-            return View();
-        }
+        public IActionResult Login() => View();
 
         [HttpPost]
         public async Task<IActionResult> Login(string email, string password)
@@ -31,20 +29,21 @@ namespace RacedayMvc.Controllers
             {
                 var result = await response.Content.ReadFromJsonAsync<LoginResponse>();
 
-                if (result != null)
+                if (result != null && result.User != null)
                 {
-                    HttpContext.Session.SetString("UserRole", result.Role);
-                    HttpContext.Session.SetString("UserName", result.Name);
-                    HttpContext.Session.SetInt32("UserId", result.UserId);
+                    HttpContext.Session.SetString("UserRole", result.User.Role);
+                    HttpContext.Session.SetString("UserName", result.User.FullName);
+                    HttpContext.Session.SetInt32("UserId", result.User.UserId);
 
-                    if (result.Role == "Organiser")
+                    if (result.User.Role == "Organiser")
                         return RedirectToAction("Dashboard", "Organiser");
                     else
                         return RedirectToAction("Index", "Participant");
                 }
             }
 
-            ViewBag.Error = "Invalid login credentials.";
+            var errorDetails = await response.Content.ReadAsStringAsync();
+            ViewBag.Error = $"Login failed: {errorDetails}";
             return View();
         }
 
@@ -54,13 +53,14 @@ namespace RacedayMvc.Controllers
         [HttpPost]
         public async Task<IActionResult> Register(string name, string email, string password, string role)
         {
-            var regData = new { Name = name, Email = email, Password = password, Role = role };
+            var regData = new { FullName = name, Email = email, Password = password, Role = role };
             var response = await _apiService.PostAsync("api/auth/register", JsonContent.Create(regData));
 
             if (response.IsSuccessStatusCode)
                 return RedirectToAction("Login");
 
-            ViewBag.Error = "Registration failed.";
+            var errorDetails = await response.Content.ReadAsStringAsync();
+            ViewBag.Error = $"Registration failed. API says: {errorDetails}";
             return View();
         }
 
@@ -69,13 +69,5 @@ namespace RacedayMvc.Controllers
             HttpContext.Session.Clear();
             return RedirectToAction("Login");
         }
-    }
-
-    // DTO to match your API's login response
-    public class LoginResponse
-    {
-        public int UserId { get; set; }
-        public string Name { get; set; } = string.Empty; // Fixed warning
-        public string Role { get; set; } = string.Empty; // Fixed warning
     }
 }

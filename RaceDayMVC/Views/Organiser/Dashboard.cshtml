@@ -1,4 +1,5 @@
-﻿@{
+﻿@model IEnumerable<RacedayMvc.Models.EventViewModel>
+@{
     ViewData["Title"] = "Organiser Dashboard";
 }
 
@@ -8,18 +9,26 @@
 </div>
 
 <div class="alert alert-info">
-    Welcome back, <strong>@Context.Session.GetString("UserName")</strong>! Manage your events below.
+    Welcome back, <strong>@Context.Session.GetString("UserName")</strong>!
 </div>
 
-<!-- Placeholder for Event List (You will need to fetch this via API later) -->
 <div class="row">
-    <div class="col-md-4">
-        <div class="card shadow-sm border-0 mb-3">
-            <div class="card-body">
-                <h5 class="card-title">City Marathon 2024</h5>
-                <p class="card-text text-muted">Date: 15 Dec 2024</p>
-                <span class="badge bg-success">Active</span>
+    @if (!Model.Any())
+    {
+        <div class="col-12"><p class="text-muted">You haven't created any events yet.</p></div>
+    }
+    else
+    {
+        @foreach (var ev in Model)
+        {
+            <div class="col-md-4 mb-3">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-body">
+                        <h5 class="card-title fw-bold">@ev.Name</h5>
+                        <p class="card-text text-muted">📍 @ev.Location <br> 📅 @ev.Date.ToString("dd MMM yyyy")</p>
+                    </div>
+                </div>
             </div>
-        </div>
-    </div>
+        }
+    }
 </div>

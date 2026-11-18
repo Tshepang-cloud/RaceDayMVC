@@ -1,23 +1,39 @@
-﻿@{
+﻿@model IEnumerable<RacedayMvc.Models.EventViewModel>
+@{
     ViewData["Title"] = "Upcoming Events";
 }
 
 <div class="text-center mb-5">
     <h1 class="display-5 fw-bold text-primary">Upcoming Races</h1>
-    <p class="lead text-muted">Find your next challenge and join the RaceDay community.</p>
 </div>
 
 <div class="row">
-    <!-- Placeholder for Events (Fetch via API later) -->
-    <div class="col-md-4 mb-4">
-        <div class="card shadow border-0 h-100">
-            <!-- Placeholder for Azure Blob image -->
-            <img src="https://via.placeholder.com/400x200?text=Event+Banner" class="card-img-top" alt="Event Banner">
-            <div class="card-body">
-                <h5 class="card-title fw-bold">City Marathon</h5>
-                <p class="card-text text-muted">📍 Central Park, NY<br>📅 15 Dec 2024</p>
-                <a href="#" class="btn btn-outline-primary w-100">View Details & Enroll</a>
+    @if (!Model.Any())
+    {
+        <div class="col-12 text-center"><p class="text-muted">No events found.</p></div>
+    }
+    else
+    {
+        @foreach (var ev in Model)
+        {
+            <div class="col-md-4 mb-4">
+                <div class="card shadow border-0 h-100">
+                    <img src="@(string.IsNullOrEmpty(ev.BannerUrl) ? "https://via.placeholder.com/400x200?text=No+Banner" : ev.BannerUrl)" class="card-img-top" style="height: 200px; object-fit: cover;">
+                    <div class="card-body">
+                        <h5 class="card-title fw-bold">@ev.Name</h5>
+                        <p class="card-text text-muted">📍 @ev.Location<br>📅 @ev.Date.ToString("dd MMM yyyy")</p>
+                        <form asp-action="Enroll" method="post">
+                            <input type="hidden" name="eventId" value="@ev.Id" />
+                            <select name="category" class="form-select mb-2" required>
+                                <option value="">Select Category...</option>
+                                <option value="5km">5km</option>
+                                <option value="10km">10km</option>
+                            </select>
+                            <button type="submit" class="btn btn-outline-primary w-100">Enroll Now</button>
+                        </form>
+                    </div>
+                </div>
             </div>
-        </div>
-    </div>
+        }
+    }
 </div>

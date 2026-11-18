@@ -1,37 +1,33 @@
-using Microsoft.AspNetCore.Builder;
+﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
-using RacedayMvc.Services;
-using System;
+using RacedayMvc.Services; // Ensures IApiService is found
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
-
-// 1. Add HttpContextAccessor (needed to access Session in Views)
 builder.Services.AddHttpContextAccessor();
 
-// 2. Add Session Support
+// Add Session Support
 builder.Services.AddSession(options =>
 {
-    options.IdleTimeout = TimeSpan.FromMinutes(60); // Session timeout
+    options.IdleTimeout = TimeSpan.FromMinutes(60);
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
 });
 
-// 3. Add HttpClient for API consumption
+// Add HttpClient for API consumption
 builder.Services.AddHttpClient("RaceDayApi", client =>
 {
-    // REPLACE WITH YOUR PART 2 API URL
-    client.BaseAddress = new Uri("https://localhost:7000/");
+    // ⚠️ IMPORTANT: Check your API terminal and make sure this port is correct!
+    client.BaseAddress = new Uri("http://localhost:5144/");
 });
 
-// 4. Register your custom API Service
+// Register custom API Service
 builder.Services.AddScoped<IApiService, ApiService>();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
@@ -42,12 +38,13 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 
-// 5. IMPORTANT: Use Session BEFORE Authorization
+// IMPORTANT: Use Session BEFORE Authorization
 app.UseSession();
 app.UseAuthorization();
 
+// Redirect root URL to Login page
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
+    pattern: "{controller=Auth}/{action=Login}/{id?}");
 
 app.Run();
