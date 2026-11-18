@@ -22,55 +22,35 @@ namespace RacedayMvc.Controllers
         [HttpPost]
         public async Task<IActionResult> Login(string email, string password)
         {
-            // 1. Check if the form actually sent data
-            if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
-            {
-                ViewBag.Error = "Please enter both email and password.";
-                return View();
-            }
-
             var loginData = new { Email = email, Password = password };
             var response = await _apiService.PostAsync("api/auth/login", JsonContent.Create(loginData));
 
-            // 2. Check if API rejected it
-            if (!response.IsSuccessStatusCode)
-            {
-                var errorDetails = await response.Content.ReadAsStringAsync();
-                ViewBag.Error = $"API Rejected Login: {response.StatusCode}. Details: {errorDetails}";
-                return View();
-            }
-
-            // 3. API succeeded, parse the JSON
-            var rawJson = await response.Content.ReadAsStringAsync();
-
-            try
+            if (response.IsSuccessStatusCode)
             {
                 var result = await response.Content.ReadFromJsonAsync<LoginResponse>();
 
-                if (result != null && result.User != null)
+                // Check if the role is actually populated now
+                if (result != null && !string.IsNullOrEmpty(result.Role))
                 {
-                    // Set Session
-                    HttpContext.Session.SetString("UserRole", result.User.Role);
-                    HttpContext.Session.SetString("UserName", result.User.FullName);
-                    HttpContext.Session.SetInt32("UserId", result.User.UserId);
+                    HttpContext.Session.SetString("UserRole", result.Role);
+                    HttpContext.Session.SetString("UserName", result.FullName);
+                    HttpContext.Session.SetInt32("UserId", result.UserId);
 
-                    // Redirect
-                    if (result.User.Role == "Organiser")
+                    if (result.Role == "Organiser")
                         return RedirectToAction("Dashboard", "Organiser");
                     else
                         return RedirectToAction("Index", "Participant");
                 }
                 else
                 {
-                    ViewBag.Error = $"API returned success, but the data format was unexpected. Raw Data: {rawJson}";
+                    ViewBag.Error = "Login worked, but the API didn't send back a Role. Check your API's Login response.";
                     return View();
                 }
             }
-            catch (System.Text.Json.JsonException)
-            {
-                ViewBag.Error = $"The API sent back invalid JSON. Raw Data: {rawJson}";
-                return View();
-            }
+
+            var errorDetails = await response.Content.ReadAsStringAsync();
+            ViewBag.Error = $"API Rejected Login: {errorDetails}";
+            return View();
         }
 
         [HttpGet]
