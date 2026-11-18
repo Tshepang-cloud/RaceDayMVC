@@ -1,0 +1,35 @@
+﻿@{
+    ViewData["Title"] = "My Enrollments";
+}
+
+<h2 class="fw-bold mb-4">My Enrollments</h2>
+
+<div class="card shadow border-0">
+    <div class="card-body">
+        <table class="table table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>Event Name</th>
+                    <th>Date</th>
+                    <th>Category</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Examples of Rubric Requirement: Status Color Coding -->
+                <tr>
+                    <td>City Marathon</td>
+                    <td>15 Dec 2024</td>
+                    <td>10km</td>
+                    <td><span class="badge bg-warning text-dark">Pending</span></td>
+                </tr>
+                <tr>
+                    <td>Charity Run</td>
+                    <td>01 Nov 2024</td>
+                    <td>5km</td>
+                    <td><span class="badge bg-success">Confirmed</span></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
