@@ -22,53 +22,55 @@ namespace RacedayMvc.Controllers
         [HttpPost]
         public async Task<IActionResult> Login(string email, string password)
         {
+            // 1. Check if the form actually sent data
+            if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
+            {
+                ViewBag.Error = "Please enter both email and password.";
+                return View();
+            }
+
+            var loginData = new { Email = email, Password = password };
+            var response = await _apiService.PostAsync("api/auth/login", JsonContent.Create(loginData));
+
+            // 2. Check if API rejected it
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorDetails = await response.Content.ReadAsStringAsync();
+                ViewBag.Error = $"API Rejected Login: {response.StatusCode}. Details: {errorDetails}";
+                return View();
+            }
+
+            // 3. API succeeded, parse the JSON
+            var rawJson = await response.Content.ReadAsStringAsync();
+
             try
             {
-                var loginData = new { Email = email, Password = password };
-                // Make sure your API route matches exactly! (api/auth/login vs api/Auth/login)
-                var response = await _apiService.PostAsync("api/auth/login", JsonContent.Create(loginData));
+                var result = await response.Content.ReadFromJsonAsync<LoginResponse>();
 
-                if (response.IsSuccessStatusCode)
+                if (result != null && result.User != null)
                 {
-                    var rawJson = await response.Content.ReadAsStringAsync();
+                    // Set Session
+                    HttpContext.Session.SetString("UserRole", result.User.Role);
+                    HttpContext.Session.SetString("UserName", result.User.FullName);
+                    HttpContext.Session.SetInt32("UserId", result.User.UserId);
 
-                    try
-                    {
-                        var result = await response.Content.ReadFromJsonAsync<LoginResponse>();
-
-                        if (result != null && result.User != null)
-                        {
-                            HttpContext.Session.SetString("UserRole", result.User.Role);
-                            HttpContext.Session.SetString("UserName", result.User.FullName);
-                            HttpContext.Session.SetInt32("UserId", result.User.UserId);
-
-                            if (result.User.Role == "Organiser")
-                                return RedirectToAction("Dashboard", "Organiser");
-                            else
-                                return RedirectToAction("Index", "Participant");
-                        }
-                        else
-                        {
-                            ViewBag.Error = $"Login succeeded, but the data was empty. Raw API Data: {rawJson}";
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        ViewBag.Error = $"JSON Parse Error. The API sent this: {rawJson}";
-                    }
+                    // Redirect
+                    if (result.User.Role == "Organiser")
+                        return RedirectToAction("Dashboard", "Organiser");
+                    else
+                        return RedirectToAction("Index", "Participant");
                 }
                 else
                 {
-                    var errorDetails = await response.Content.ReadAsStringAsync();
-                    ViewBag.Error = $"API Rejected Login: {response.StatusCode}. Details: {errorDetails}";
+                    ViewBag.Error = $"API returned success, but the data format was unexpected. Raw Data: {rawJson}";
+                    return View();
                 }
             }
-            catch (Exception ex)
+            catch (System.Text.Json.JsonException)
             {
-                ViewBag.Error = $"MVC App Error: {ex.Message}";
+                ViewBag.Error = $"The API sent back invalid JSON. Raw Data: {rawJson}";
+                return View();
             }
-
-            return View();
         }
 
         [HttpGet]
